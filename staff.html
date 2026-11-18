@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة الموظفات</title><style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f1f1;--card:#fff;--tx:#1b2430;--mu:#64707f;--bd:#dde2e8;--pr:#741e24;--ok:#1a7f45;--no:#b3261e;--wn:#9a6700}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1c222b;--tx:#e8ecf1;--mu:#98a4b3;--bd:#2f3844;--pr:#d9707a;--ok:#4cc58a;--no:#ff8a80;--wn:#e3b341}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.6}
+header{padding:22px 14px 30px;background:linear-gradient(160deg,#741e24,#4a1217);color:#fff;text-align:center;font-weight:700;font-size:20px;border-radius:0 0 28px 28px}
+header small{display:block;font-weight:400;opacity:.88;font-size:13px}
+main{max-width:640px;margin:-12px auto 0;padding:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:16px;margin-bottom:12px}
+h2{margin:0 0 10px;font-size:18px}
+label{display:block;font-size:14px;color:var(--mu);margin:10px 0 4px}
+input,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+.btn{display:block;width:100%;padding:13px;border:0;border-radius:14px;background:var(--pr);color:#fff;font:inherit;font-weight:600;margin-top:14px;cursor:pointer}
+.btn:disabled{opacity:.6}.btn.ok{background:var(--ok)}.btn.no{background:var(--no)}.btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid currentColor}
+.t-new{color:var(--wn)}.t-ok{color:var(--ok)}.t-no{color:var(--no)}
+.mu{color:var(--mu);font-size:14px}.hide{display:none}.miss{color:var(--no)}.have{color:var(--ok)}
+.lamp{display:flex;align-items:center;gap:10px;padding:14px;border-radius:12px;color:#fff;font-weight:700;margin-bottom:12px}
+.lamp i{width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 12px 4px rgba(255,255,255,.8);flex:none}
+.lamp.ok{background:var(--ok)}.lamp.no{background:var(--no)}.lamp.new{background:var(--wn)}
+#toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;right:10px;z-index:20}
+#toast .lamp{box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.big{font-size:28px;font-weight:700;letter-spacing:1px;color:var(--pr)}
+.err{color:var(--no);font-size:14px;margin-top:8px}
+
+footer{text-align:center;font-size:12px;color:var(--mu);padding:10px 14px 24px}</style><style>.item{cursor:pointer}.item .r{display:flex;justify-content:space-between;align-items:center;gap:8px}.doc{display:flex;justify-content:space-between;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--bd)}.back{background:none;border:0;color:var(--pr);font:inherit;cursor:pointer;padding:0 0 8px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}</style></head><body>
+<header>لوحة الموظفات<small>مراجعة الطلبات</small></header>
+<main>
+<div id="gate" class="card hide">
+  <h2>تسجيل الدخول</h2>
+  <label>اسم المستخدم</label><input id="u" autocomplete="username" autocapitalize="off">
+  <label>كلمة المرور</label><input id="p" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+  <div id="g-err" class="err"></div>
+  <button class="btn" onclick="login()">دخول</button>
+</div>
+<div id="panel" class="hide">
+  <div class="top"><span class="mu" id="who"></span><button class="back" onclick="logout()">تسجيل الخروج</button></div>
+  <div id="tools" class="card" style="padding:12px"><input id="q" placeholder="بحث برقم الطلب أو الاسم أو الرمز المروري" oninput="render()">
+  <div class="row" style="margin-top:8px" id="flt"></div></div>
+  <div id="list"></div><div id="detail" class="hide"></div>
+</div>
+</main>
+<footer></footer>
+<script src="sb.js"></script>
+<script>var ST={new:['قيد المراجعة','t-new'],ok:['موافق','t-ok'],no:['مرفوض','t-no']},DOCS=[['d1','حيازة السيارة'],['d2','فحص المركبة'],['d3','شهادة التأمين']],timer=null,cur=null,ALL=[],FL='new';
+var S=null;try{S=JSON.parse(sessionStorage.getItem('sbs')||'null')}catch(e){}
+function keep(s){S=s;try{s?sessionStorage.setItem('sbs',JSON.stringify(s)):sessionStorage.removeItem('sbs')}catch(e){}}
+function refresh(){
+  if(!S||!S.r)return Promise.reject(new Error('auth'));
+  return sbFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:S.r})})
+  .then(function(x){if(!x.ok)throw new Error('auth');keep({a:x.j.access_token,r:x.j.refresh_token,u:S.u})});
+}
+function call(fn,args,retry){
+  if(!S)return Promise.reject(showGate());
+  return sbRpc(fn,args,S.a).then(function(x){
+    if(x.status===401&&!retry)return refresh().then(function(){return call(fn,args,true)},function(){showGate();throw new Error('auth')});
+    if(!x.ok&&/تسجيل الدخول/.test(sbErr(x))){showGate();throw new Error('auth')}
+    return x;
+  });
+}
+function showGate(){keep(null);clearInterval(timer);$('panel').classList.add('hide');$('gate').classList.remove('hide')}
+function login(){
+  $('g-err').textContent='';var u=$('u').value.trim().toLowerCase();
+  sbFetch('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:u+STAFF_DOMAIN,password:$('p').value})})
+  .then(function(x){
+    if(!x.ok){$('g-err').textContent='بيانات الدخول غير صحيحة';return}
+    keep({a:x.j.access_token,r:x.j.refresh_token,u:u});$('p').value='';
+    return call('staff_list',{}).then(function(y){if(!y.ok){$('g-err').textContent='هذا الحساب ليس من حسابات الموظفات';return}enter()});
+  }).catch(function(){$('g-err').textContent='تعذر الاتصال'});
+}
+function logout(){if(S)sbFetch('/auth/v1/logout',{method:'POST'},S.a);showGate()}
+function enter(){$('who').textContent='المستخدمة: '+S.u;$('gate').classList.add('hide');$('panel').classList.remove('hide');cur=null;loadList();clearInterval(timer);timer=setInterval(function(){if(!cur)loadList()},5000)}
+function loadList(){
+  call('staff_list',{}).then(function(x){
+    if(!x.ok)return;$('detail').classList.add('hide');$('list').classList.remove('hide');$('tools').classList.remove('hide');
+    ALL=(x.j||[]).map(function(r){return{no:r.no,name:r.name,code:r.code,date:r.req_date,status:r.status,missing:r.missing}});render();
+  }).catch(function(){});
+}
+function setF(f){FL=f;render()}
+function render(){
+  var c={all:ALL.length,new:0,ok:0,no:0};ALL.forEach(function(r){c[r.status]++});
+  $('flt').innerHTML=[['new','قيد المراجعة'],['ok','موافق'],['no','مرفوض'],['all','الكل']].map(function(f){
+    return '<button class="btn '+(FL===f[0]?'':'sec')+'" style="margin:0;padding:8px;font-size:14px" onclick="setF(\''+f[0]+'\')">'+f[1]+' ('+c[f[0]]+')</button>'}).join('');
+  var q=($('q').value||'').trim().toLowerCase();
+  var L=ALL.filter(function(r){return (FL==='all'||r.status===FL)&&(!q||(r.no+' '+r.name+' '+r.code).toLowerCase().indexOf(q)>=0)});
+  if(!L.length){$('list').innerHTML='<div class="card mu">لا توجد طلبات.</div>';return}
+  $('list').innerHTML=L.map(function(r){var s=ST[r.status];
+    return '<div class="card item" onclick="openReq(\''+esc(r.no)+'\')"><div class="r"><b>#'+esc(r.no)+' — '+esc(r.name)+'</b><span class="tag '+s[1]+'">'+s[0]+'</span></div><div class="mu">رمز '+esc(r.code)+' · '+esc(r.date)+(r.missing?' · <span class="miss">مستندات ناقصة: '+r.missing+'</span>':'')+'</div></div>'}).join('');
+}
+function openFile(no,k,path){
+  call('staff_log_file',{p_no:no,p_doc:k}).catch(function(){});
+  return sbFetch('/storage/v1/object/sign/docs/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expiresIn:300})},S.a)
+    .then(function(x){return x.ok?SB_URL+'/storage/v1'+x.j.signedURL:null});
+}
+function openPdf(no,k,path){var w=window.open('','_blank');openFile(no,k,path).then(function(u){if(u&&w)w.location=u;else if(w)w.close()})}
+function openReq(no){
+  cur=no;
+  call('staff_get',{p_no:no}).then(function(x){
+    var r=x.ok&&x.j&&x.j[0];if(!r)return;var s=ST[r.status];
+    $('list').classList.add('hide');$('tools').classList.add('hide');
+    var h='<div class="card"><button class="back" onclick="cur=null;loadList()">← رجوع</button><h2>طلب #'+esc(r.no)+' <span class="tag '+s[1]+'">'+s[0]+'</span></h2>'+
+    '<div>التاريخ: '+esc(r.req_date)+'</div><div>الاسم: '+esc(r.name)+'</div><div>الرمز المروري: '+esc(r.code)+'</div><div>رقم القاعدة: '+esc(r.chassis)+'</div><div>موديل المركبة: '+esc(r.model)+'</div><h2 style="margin-top:14px">المستندات</h2>'+
+    DOCS.map(function(d){var f=r.docs[d[0]];var pdf=f&&/\.pdf$/.test(f.path);
+      return '<div class="doc"><span>'+d[1]+'</span><span class="'+(f?'have':'miss')+'">'+(f?esc(f.name):'ناقص')+'</span>'+
+      (f?(pdf?'<a href="#" onclick="openPdf(\''+esc(r.no)+'\',\''+d[0]+'\',\''+esc(f.path)+'\');return false">فتح الملف</a>':'<img id="img-'+d[0]+'" alt="" style="width:100%;margin-top:8px;border-radius:8px">'):'')+'</div>'}).join('');
+    if(r.status==='new'){
+      h+='<h2 style="margin-top:14px">القرار</h2><label>الرقم المميز (عند الموافقة)</label><input id="v-no" maxlength="20"><label>الملاحظات (إلزامية عند الرفض)</label><textarea id="v-rs" rows="3" maxlength="500"></textarea><div id="d-err" class="err"></div>'+
+      '<div class="row"><button class="btn ok" onclick="decide(\''+esc(r.no)+'\',\'ok\')">موافق</button><button class="btn no" onclick="decide(\''+esc(r.no)+'\',\'no\')">رفض</button></div>';
+    }else{
+      h+=(r.status==='ok'?'<p>الرقم المميز المعتمد: <b>'+esc(r.vehicle)+'</b></p>':'')+(r.notes?'<p>الملاحظات: '+esc(r.notes)+'</p>':'')+'<p class="mu">القرار بواسطة: '+esc(r.decided_by)+'</p>';
+    }
+    $('detail').innerHTML=h+'</div>';$('detail').classList.remove('hide');
+    DOCS.forEach(function(d){var f=r.docs[d[0]];if(f&&!/\.pdf$/.test(f.path))openFile(r.no,d[0],f.path).then(function(u){var im=$('img-'+d[0]);if(u&&im)im.src=u})});
+  }).catch(function(){});
+}
+function decide(no,st){
+  call('staff_decide',{p_no:no,p_status:st,p_vehicle:($('v-no')||{}).value||'',p_notes:($('v-rs')||{}).value||''})
+  .then(function(x){if(!x.ok){$('d-err').textContent=sbErr(x);return}openReq(no)}).catch(function(){});
+}
+if(S)enter();else showGate();
+</script></body></html>

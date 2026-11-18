@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>طلب رقم مركبة مميز</title><style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f1f1;--card:#fff;--tx:#1b2430;--mu:#64707f;--bd:#dde2e8;--pr:#741e24;--ok:#1a7f45;--no:#b3261e;--wn:#9a6700}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1c222b;--tx:#e8ecf1;--mu:#98a4b3;--bd:#2f3844;--pr:#d9707a;--ok:#4cc58a;--no:#ff8a80;--wn:#e3b341}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.6}
+header{padding:22px 14px 30px;background:linear-gradient(160deg,#741e24,#4a1217);color:#fff;text-align:center;font-weight:700;font-size:20px;border-radius:0 0 28px 28px}
+header small{display:block;font-weight:400;opacity:.88;font-size:13px}
+main{max-width:640px;margin:-12px auto 0;padding:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:16px;margin-bottom:12px}
+h2{margin:0 0 10px;font-size:18px}
+label{display:block;font-size:14px;color:var(--mu);margin:10px 0 4px}
+input,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+.btn{display:block;width:100%;padding:13px;border:0;border-radius:14px;background:var(--pr);color:#fff;font:inherit;font-weight:600;margin-top:14px;cursor:pointer}
+.btn:disabled{opacity:.6}.btn.ok{background:var(--ok)}.btn.no{background:var(--no)}.btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid currentColor}
+.t-new{color:var(--wn)}.t-ok{color:var(--ok)}.t-no{color:var(--no)}
+.mu{color:var(--mu);font-size:14px}.hide{display:none}.miss{color:var(--no)}.have{color:var(--ok)}
+.lamp{display:flex;align-items:center;gap:10px;padding:14px;border-radius:12px;color:#fff;font-weight:700;margin-bottom:12px}
+.lamp i{width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 12px 4px rgba(255,255,255,.8);flex:none}
+.lamp.ok{background:var(--ok)}.lamp.no{background:var(--no)}.lamp.new{background:var(--wn)}
+#toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;right:10px;z-index:20}
+#toast .lamp{box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.big{font-size:28px;font-weight:700;letter-spacing:1px;color:var(--pr)}
+.err{color:var(--no);font-size:14px;margin-top:8px}
+
+footer{text-align:center;font-size:12px;color:var(--mu);padding:10px 14px 24px}</style></head><body>
+<header>طلب رقم مركبة مميز<small>تقديم الطلب إلكترونياً</small></header>
+<div id="toast"></div>
+<main>
+<div id="form" class="card">
+  <h2>نموذج طلب رقم مركبة مميز</h2>
+  <p class="mu">يُرجى تعبئة البيانات بدقة لاستكمال إجراءات الطلب.</p>
+  <label>التاريخ</label><input id="f-date" type="date">
+  <label>الاسم</label><input id="f-name" maxlength="100" autocomplete="name">
+  <label>الرمز المروري</label><input id="f-code" maxlength="20" inputmode="numeric">
+  <label>رقم القاعدة للمركبة</label><input id="f-chassis" maxlength="30">
+  <label>موديل المركبة</label><input id="f-model" maxlength="60">
+  <h2 style="margin-top:18px">المستندات</h2>
+  <div id="docs-ui"></div>
+  <p class="mu">المستندات الناقصة لا تمنع تقديم الطلب، وسيتم إشعارك باستكمالها.</p>
+  <p class="mu">أقر بأن جميع البيانات الواردة في هذا الطلب صحيحة، وأتعهد باستكمال أي مستندات أو متطلبات تحددها الجهة المختصة وفق الأنظمة المعمول بها. وفي حال عدم استكمال التسجيل خلال 30 يوم يحق لسلطة الترخيص التصرف في الرقم.</p>
+  <label style="display:flex;gap:8px;align-items:center;color:var(--tx)"><input type="checkbox" id="f-ack" style="width:auto"> أوافق على الإقرار أعلاه</label>
+  <div id="f-err" class="err"></div>
+  <button class="btn" id="sub" onclick="submitReq()">تقديم الطلب</button>
+</div>
+<div id="done" class="card hide">
+  <h2>تم استلام طلبك</h2>
+  <div class="mu">رقم الطلب (احتفظ به للمتابعة)</div><div class="big" id="d-no"></div>
+  <div id="d-lamp" style="margin-top:12px"></div>
+  <button class="btn sec" onclick="showForm()">طلب جديد</button>
+</div>
+<div class="card">
+  <h2>متابعة الطلب</h2>
+  <label>رقم الطلب</label><input id="t-no" inputmode="numeric" maxlength="8">
+  <label>رقم القاعدة للمركبة</label><input id="t-ch" maxlength="30">
+  <button class="btn" onclick="track()">متابعة</button>
+  <div id="t-res" style="margin-top:12px"></div>
+</div>
+</main>
+<footer></footer>
+<script src="sb.js"></script>
+<script>
+var DOCS=[['d1','حيازة السيارة'],['d2','فحص المركبة'],['d3','شهادة التأمين']],P={},poll=null;
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
+function buildDocs(){
+  $('docs-ui').innerHTML=DOCS.map(function(d){var k=d[0];return '<label>'+d[1]+'</label><div class="row"><button type="button" class="btn" style="margin:0" onclick="$(\''+k+'c\').click()">📷 تصوير</button><button type="button" class="btn sec" style="margin:0" onclick="$(\''+k+'\').click()">📁 ملف</button></div><input type="file" id="'+k+'c" accept="image/*" capture="environment" class="hide" onchange="pick(\''+k+'\',this)"><input type="file" id="'+k+'" accept="image/*,.pdf" class="hide" onchange="pick(\''+k+'\',this)"><div id="s-'+k+'" class="mu"></div>'}).join('');
+}
+function pick(k,el){
+  var f=el.files[0];if(!f)return;var s=$('s-'+k);
+  var rd=new FileReader();
+  if(f.type==='application/pdf'){
+    if(f.size>2.5*1024*1024){s.innerHTML='<span class="miss">الملف كبير (الحد 2.5 ميغابايت)</span>';return}
+    rd.onload=function(){P[k]={name:f.name,data:rd.result};s.innerHTML='<span class="have">✓ '+esc(f.name)+'</span>'};rd.readAsDataURL(f);return}
+  if(f.type.indexOf('image/')!==0){s.innerHTML='<span class="miss">نوع الملف غير مدعوم</span>';return}
+  rd.onload=function(){var im=new Image();im.onload=function(){
+    var sc=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');
+    c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    var u=c.toDataURL('image/jpeg',0.75);P[k]={name:(f.name||'photo')+'.jpg',data:u};
+    s.innerHTML='<span class="have">✓ تم</span><img src="'+u+'" alt="" style="display:block;width:100%;max-width:200px;margin-top:6px;border-radius:8px">';
+  };im.src=rd.result};rd.readAsDataURL(f);
+}
+function showForm(){$('form').classList.remove('hide');$('done').classList.add('hide')}
+function lamp(r){
+  var t=r.status==='ok'?'تمت الموافقة على طلبك — الرقم المميز: '+esc(r.vehicle):r.status==='no'?'تم رفض طلبك — '+esc(r.notes):'طلبك قيد المراجعة';
+  return '<div class="lamp '+r.status+'"><i></i><span>'+t+'</span></div>';
+}
+function toBlob(u){var p=u.split(','),m=/data:([^;]+)/.exec(p[0])[1],b=atob(p[1]),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:m})}
+var EXT={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};
+function uploadDocs(){
+  var id=(crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,function(c){return(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16)})),out={};
+  return Promise.all(Object.keys(P).map(function(k){
+    var b=toBlob(P[k].data),ext=EXT[b.type];if(!ext)return Promise.reject(new Error('نوع الملف غير مدعوم'));
+    var path='u/'+id+'/'+k+'.'+ext;
+    return sbFetch('/storage/v1/object/docs/'+path,{method:'POST',headers:{'Content-Type':b.type},body:b}).then(function(x){
+      if(!x.ok)throw new Error('تعذر رفع المستند ('+k+')');out[k]={path:path,name:P[k].name};});
+  })).then(function(){return out});
+}
+function submitReq(){
+  var e=$('f-err');e.textContent='';
+  var b={date:$('f-date').value,name:$('f-name').value,code:$('f-code').value,chassis:$('f-chassis').value,model:$('f-model').value,ack:$('f-ack').checked};
+  if(!b.name.trim()||!b.code.trim()||b.chassis.trim().length<5||b.model.trim().length<2){e.textContent='يرجى تعبئة جميع الخانات';return}
+  if(!b.ack){e.textContent='يرجى الموافقة على الإقرار';return}
+  $('sub').disabled=true;$('sub').textContent='جارٍ الإرسال...';
+  uploadDocs().then(function(docs){
+    return sbRpc('submit_request',{p_name:b.name,p_code:b.code,p_chassis:b.chassis,p_model:b.model,p_date:b.date||null,p_docs:docs});
+  }).then(function(x){
+    $('sub').disabled=false;$('sub').textContent='تقديم الطلب';
+    if(!x.ok){e.textContent=sbErr(x);return}
+    var no=String(x.j);
+    ls('mine',JSON.stringify({no:no,chassis:b.chassis.trim()}));ls('seen','');
+    $('d-no').textContent=no;$('d-lamp').innerHTML=lamp({status:'new'});
+    $('form').classList.add('hide');$('done').classList.remove('hide');
+    ['f-name','f-code','f-chassis','f-model'].forEach(function(i){$(i).value=''});$('f-ack').checked=false;P={};buildDocs();
+    startPoll();
+  }).catch(function(er){$('sub').disabled=false;$('sub').textContent='تقديم الطلب';e.textContent=er&&er.message||'تعذر الاتصال بالخادم'});
+}
+function fetchStatus(no,ch){
+  return sbRpc('track_request',{p_no:String(no),p_chassis:ch}).then(function(x){return x.ok&&x.j&&x.j.length?x.j[0]:null}).catch(function(){return null});
+}
+function track(){
+  var no=$('t-no').value.trim(),ch=$('t-ch').value.trim();
+  fetchStatus(no,ch).then(function(r){$('t-res').innerHTML=r?lamp(r):'<span class="mu">لم يتم العثور على طلب بهذه البيانات</span>'});
+}
+function startPoll(){
+  clearInterval(poll);
+  var m;try{m=JSON.parse(ls('mine')||'null')}catch(e){m=null}
+  if(!m)return;
+  function tick(){
+    fetchStatus(m.no,m.chassis).then(function(r){
+      if(!r)return;
+      if($('done')&&!$('done').classList.contains('hide'))$('d-lamp').innerHTML=lamp(r);
+      if(r.status!=='new'){
+        var tag=m.no+':'+r.status;
+        if(ls('seen')!==tag){ls('seen',tag);$('toast').innerHTML=lamp(r)+'<button class="btn sec" style="margin:0 0 8px" onclick="$(\'toast\').innerHTML=\'\'">إغلاق</button>';
+          $('t-no').value=m.no;$('t-ch').value=m.chassis;$('t-res').innerHTML=lamp(r)}
+        clearInterval(poll);
+      }
+    });
+  }
+  tick();poll=setInterval(tick,6000);
+}
+buildDocs();$('f-date').value=new Date().toISOString().slice(0,10);startPoll();
+</script></body></html>
